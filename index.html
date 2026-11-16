@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ToneBird · WhatsApp demo</title>
+<style>
+  :root{--ink:#202c33;--muted:#667781;--green:#00a884;--line:#e8edeb}
+  *{box-sizing:border-box}body{margin:0;min-width:320px;background:#f1f4f1;color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}button,textarea{font:inherit}button{cursor:pointer;border:0}button:focus-visible,textarea:focus-visible{outline:3px solid #74d8ae;outline-offset:3px}.shell{width:min(1060px,calc(100% - 32px));margin:32px auto}.top{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:750;letter-spacing:-.03em}.brand-mark{width:25px;height:21px;border-radius:60% 60% 55% 35%;background:#18df7d;transform:rotate(-9deg)}.top-actions{display:flex;align-items:center;gap:14px}.label{color:#76847c;font-size:12px}.play{padding:10px 15px;border-radius:8px;background:#21382e;color:#fff;font-size:12px;font-weight:700}.play:hover{background:#12251c}
+  .app{width:min(100%,760px);height:600px;margin:auto;display:grid;grid-template-columns:230px 1fr;overflow:hidden;border:1px solid #dce3df;border-radius:12px;background:#fff;box-shadow:0 20px 60px rgba(38,60,49,.12)}.sidebar{background:#fff;border-right:1px solid var(--line)}.side-top{height:64px;padding:16px;display:flex;align-items:center;justify-content:space-between;background:#f0f2f5;font-weight:700;font-size:17px}.side-icons{color:#667781;font-size:18px}.search{margin:10px 12px;padding:9px 12px;border-radius:8px;background:#f0f2f5;color:#89969b;font-size:12px}.side-title{padding:12px 16px 8px;color:#879390;font-size:11px;font-weight:700;letter-spacing:.08em}.chat-item{padding:12px;display:flex;align-items:center;gap:10px;background:#f0f2f5}.avatar{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border-radius:50%;background:#ead0b7;color:#6e4938;font-weight:700;font-size:14px}.chat-item b{display:block;font-size:13px}.chat-item small{display:block;margin-top:5px;color:#7a8984;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:145px}.chat{position:relative;display:flex;flex-direction:column;min-width:0;background:#eae6df}.chat:before{content:"";position:absolute;inset:64px 0 68px;background-image:radial-gradient(#c8c3b9 1px,transparent 1px);background-size:24px 24px;opacity:.16;pointer-events:none}.head{z-index:1;height:64px;display:flex;align-items:center;gap:11px;padding:0 16px;background:#f0f2f5}.head b{display:block;font-size:14px}.head small{display:block;margin-top:3px;color:#667781;font-size:11px}.head-icons{margin-left:auto;color:#77868d;font-size:19px;letter-spacing:10px}.messages{position:relative;z-index:1;flex:1;overflow:auto;padding:22px 22px 16px;display:flex;flex-direction:column;gap:10px}.date{align-self:center;padding:5px 10px;border-radius:6px;background:#fff;color:#86918f;font-size:10px;box-shadow:0 1px 2px #0000000d}.bubble{align-self:flex-start;max-width:83%;padding:9px 11px 6px;border-radius:7px;background:#fff;box-shadow:0 1px 2px #00000010;font-size:13px;line-height:1.48}.bubble.mine{align-self:flex-end;background:#d9fdd3}.bubble small{display:block;margin-top:4px;color:#899a95;font-size:10px;text-align:right}.bubble.mine small{color:#7f9990}.message-composer{position:relative;z-index:2;display:flex;align-items:center;gap:10px;min-height:68px;padding:10px 14px;background:#f0f2f5}.icon{color:#73838a;font-size:22px}.input-wrap{position:relative;flex:1;min-width:0}.input{display:block;width:100%;height:45px;max-height:90px;resize:none;padding:12px 50px 10px 13px;border:0;border-radius:8px;background:#fff;color:#263238;font-size:13px;line-height:1.5}.input::placeholder{color:#9ca9ad}.send{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:transparent;color:#9ca9ad;font-size:20px}.send:not(:disabled){background:var(--green);color:white}
+  .overlay{position:absolute;z-index:4;left:24px;right:24px;bottom:105px;padding:10px;border:8px solid rgba(64,66,65,.78);border-radius:24px;background:linear-gradient(150deg,#161817,#080909);box-shadow:0 9px 20px #0006;color:white;opacity:0;pointer-events:none;transform:translateY(10px) scale(.98);transition:opacity .2s,transform .2s}.overlay.open{opacity:1;pointer-events:auto;transform:none}.close{position:absolute;right:-15px;top:-15px;width:20px;height:20px;border-radius:50%;background:#7a7d7b;color:white;line-height:20px;font-size:15px}.loading{min-height:75px}.loading-label{display:block;margin:3px 0 11px;font-size:12px}.skeleton{display:block;height:5px;margin:8px 0;border-radius:9px;background:linear-gradient(90deg,#282b29,#4b504c,#282b29);background-size:200% 100%;animation:shine 1.2s infinite}.skeleton:nth-of-type(1){width:95%}.skeleton:nth-of-type(2){width:79%}.skeleton:nth-of-type(3){width:34%}@keyframes shine{to{background-position:-200% 0}}.reply,.tweak-view{display:none}.overlay.ready .loading{display:none}.overlay.ready .reply{display:block}.overlay.tweaking .reply{display:none}.overlay.tweaking .tweak-view{display:block}.reply-line{display:flex;align-items:center;gap:4px;min-height:40px;border-radius:18px;background:#050606}.arrow{flex:0 0 30px;height:36px;background:transparent;color:#d2d8d4;font-size:20px}.suggestion{flex:1;font-size:12px;line-height:1.35;min-height:30px;display:flex;align-items:center}.dots{display:flex;justify-content:center;gap:5px;height:8px;margin-top:4px}.dots i{width:6px;height:4px;border-radius:99px;background:#515654}.dots i.active{width:10px;background:white}.panel-controls{display:flex;justify-content:space-between;align-items:center;margin-top:2px}.pill{padding:4px 10px;border-radius:12px;background:#303431;color:white;font-size:10px}.pill:hover{background:#49524c}.tweak-view{min-height:95px}.tweak-view p{margin:9px 4px 12px;font-size:12px}.tweak-options{display:flex;gap:6px;flex-wrap:wrap}.back{padding:0;background:transparent;color:#c4cbc6;font-size:11px}
+  /* Visual dimensions/materials come from ToneBird 1.0.7; hit areas stay stationary. */
+  .input{padding-right:13px}
+  .launcher{position:absolute;z-index:3;top:-82px;right:17px;width:48px;height:78px;pointer-events:none}
+  .launcher.expanded:before{content:"";position:absolute;inset:0 -8px 0;pointer-events:auto}
+  .launcher .orb{position:absolute;z-index:1;inset:auto 0 0;display:grid;place-items:center;width:48px;height:48px;padding:0;border-radius:50%;background:transparent;box-shadow:none;transform:none!important;transition:none;pointer-events:auto;touch-action:manipulation}
+  .launcher .orb:hover{box-shadow:none}
+  .orb-art{display:block;width:12px;height:12px;border-radius:50%;background:radial-gradient(ellipse 65% 65% at 95% 85%,rgba(8,90,34,.902) 0%,rgba(8,90,34,0) 70%),radial-gradient(ellipse 83% 83% at 12% 88%,rgba(238,255,0,1) 0%,rgba(98,240,42,.851) 42%,rgba(98,240,42,0) 72%),radial-gradient(ellipse 83% 93% at 42% 22%,#d2f7dc 0%,#4cd463 55%,#0c6b2a 100%);transform:translate(var(--orb-x,0px),var(--orb-y,0px)) scale(var(--orb-scale,1));transition:transform 160ms cubic-bezier(.333333,.666667,.666667,1)}
+  .idea{position:absolute;z-index:2;top:7px;left:2px;display:grid;place-items:center;width:44px;height:36px;padding:0;background:transparent;border-radius:18px;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(3px);transition:opacity 100ms ease-out,transform 100ms ease-out,visibility 100ms;touch-action:manipulation}
+  .launcher.expanded .idea{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+  .idea-art{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:.5px solid rgba(255,255,255,.180392);background:linear-gradient(rgba(58,58,58,.960784),rgba(22,22,22,.960784));box-shadow:0 1px 6px rgba(0,0,0,.35)}
+  .idea-art svg{width:14.56px;height:14.56px;overflow:visible}
+  .idea:active .idea-art,.idea[aria-expanded="true"] .idea-art{background:linear-gradient(#4dd463,#1f9e3d);border-color:rgba(255,255,255,.301961)}
+  .orb-tip{position:absolute;right:46px;top:12px;display:flex;align-items:center;height:24px;padding:0 8px;border:.5px solid rgba(255,255,255,.101961);border-radius:6px;background:rgba(24,24,24,.960784);color:rgba(255,255,255,.941176);font:500 11px/1 "Segoe UI",sans-serif;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 100ms ease-out,visibility 100ms}
+  .idea .orb-tip{right:44px;top:6px}
+  .launcher.expanded[data-tip="reply"] .reply-tip,.launcher.expanded[data-tip="idea"] .idea-tip{opacity:1;visibility:visible}
+  .launcher.capturing .orb-tip{opacity:0!important;visibility:hidden!important}
+  .launcher.tip-right .orb-tip{right:auto;left:46px}.launcher.tip-right .idea .orb-tip{left:44px}
+  .overlay{visibility:hidden}.overlay.open{visibility:visible}
+  .intent-view{display:none}.overlay.intent .loading,.overlay.intent .reply{display:none}.overlay.intent .intent-view{display:block}
+  .intent-title{display:block;margin:4px 2px 8px;font-size:12px;font-weight:600}.intent-input{display:block;width:100%;min-height:70px;resize:vertical;border:1px solid #454c47;border-radius:9px;background:#202521;padding:10px;color:#f0f5f1;font-size:12px;line-height:1.5}.intent-input::placeholder{color:#98a39b}.intent-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.intent-hint{font-size:10px;color:#b0bbb4}.pill:disabled{opacity:.4;cursor:default}
+  .overlay.intent{left:16px;right:82px;bottom:85px}.intent-actions{flex-wrap:wrap}.voice-state{display:flex;align-items:center;gap:8px;margin:2px 2px 10px;color:#b8c2bc;font-size:10px}.voice-wave{display:flex;align-items:center;gap:3px;height:16px}.voice-wave i{width:2px;height:8px;border-radius:2px;background:#89d970;animation:voice .85s ease-in-out infinite alternate}.voice-wave i:nth-child(2n){height:14px;animation-delay:-.3s}.voice-wave i:nth-child(3){animation-delay:-.6s}@keyframes voice{to{transform:scaleY(.4)}}
+  .help{width:min(100%,760px);margin:16px auto 0;display:flex;justify-content:space-between;gap:16px;color:#6e7e76;font-size:12px;line-height:1.6}.help b{color:#34473c}.note{color:#9aa59e;white-space:nowrap}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@media(max-width:650px){.shell{width:calc(100% - 18px);margin:12px auto}.label,.sidebar{display:none}.app{height:min(620px,calc(100dvh - 120px));min-height:500px;grid-template-columns:1fr}.head-icons{font-size:15px;letter-spacing:5px}.messages{padding:20px 14px}.overlay{left:16px;right:16px}.help{display:block}.note{display:block;margin-top:6px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+<link rel="stylesheet" href="assets/tonebird-original/native-ui.css">
+<link rel="stylesheet" href="tonebird-upgrade.css">
+</head>
+<body>
+<main class="shell">
+  <header class="top"><div class="top-actions"><span class="label">WhatsApp demo</span><button class="play" id="play" type="button">▶ Play demo</button></div></header>
+  <section class="app" aria-label="ToneBird in WhatsApp">
+    <aside class="sidebar"><div class="side-top"><span>WhatsApp</span><span class="side-icons">⌕ ···</span></div><div class="search">⌕　Search or start new chat</div><div class="side-title">CHATS</div><div class="chat-item"><span class="avatar" id="side-avatar">S</span><span><b id="side-name">Sarah Chen</b><small id="side-preview">Would Thursday afternoon work?</small></span></div></aside>
+    <article class="chat"><header class="head"><span class="avatar" id="chat-avatar">S</span><span><b id="chat-name">Sarah Chen</b><small id="chat-state">online</small></span><span class="head-icons" aria-hidden="true">⌕ ⋮</span></header>
+      <div class="messages" id="messages" aria-live="polite"><span class="date">TODAY</span><div class="bubble">Hi! Have you had a chance to look at the proposal?<small>10:18</small></div><div class="bubble mine">Yes, the direction looks good. I’m checking the timeline with my team now.<small>10:24　✓✓</small></div><div class="bubble">Great! Would Thursday afternoon work for a quick call to go over the details?<small>10:26</small></div></div>
+      <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="panel-title" aria-hidden="true" inert>
+        <header class="panel-header"><h2 id="panel-title">Review context</h2><button class="close" id="close" type="button" aria-label="Close reply assistant">✕</button></header>
+        <div class="panel-body" id="panel-body">
+          <section class="panel-view" id="view-loading" hidden><p class="loading-label" id="loading-label" role="status">Reading conversation…</p><div aria-hidden="true"><i class="skeleton"></i><i class="skeleton"></i><i class="skeleton"></i></div></section>
+          <section class="panel-view" id="view-context" hidden>
+            <p class="notice" id="context-notice" role="status"></p>
+            <p class="context-preview" id="context-preview"></p>
+            <details class="context-details" id="context-details"><summary>Review / edit conversation</summary>
+            <div class="source-choice"><button class="pill" id="use-visible" type="button">Use visible conversation</button><button class="pill" id="use-manual" type="button">Paste conversation</button></div>
+            <label class="field-label" for="context-input">Conversation context</label>
+            <textarea class="context-input" id="context-input" rows="4" aria-describedby="context-meta" placeholder="Paste the relevant messages and include speaker names."></textarea>
+            <p class="context-meta" id="context-meta">Remove unrelated messages or correct the captured text.</p>
+            </details>
+          </section>
+          <section class="panel-view" id="view-replies" hidden>
+            <div class="reply-line" id="single-reply"><button class="arrow" id="prev" type="button" aria-label="Previous reply"><img src="assets/tonebird-original/chevron-left.svg" alt=""></button><span class="suggestion" id="suggestion"></span><button class="arrow" id="next" type="button" aria-label="Next reply"><img src="assets/tonebird-original/chevron-right.svg" alt=""></button><p class="dots" id="dots" role="status"></p></div>
+            <div class="candidate-list" id="candidate-list" role="radiogroup" aria-label="Compare and select a reply" hidden></div>
+          </section>
+          <section class="panel-view" id="view-intent" hidden>
+            <div class="voice-state"><span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>Voice simulation · microphone off</span></div>
+            <label class="field-label" for="intent-input">What would you like to say?</label>
+            <textarea class="intent-input" id="intent-input" rows="4" placeholder="For example: Thursday at 3 PM works. Keep it friendly."></textarea>
+            <p class="memory-note">Edit your idea, then review the context before generating.</p>
+          </section>
+          <section class="panel-view" id="view-tweak" hidden><div class="native-tweak-bar"><button class="pill" id="tweak-back" type="button">‹ Back</button><div class="tweak-options"><button class="text-action" data-style="warm" type="button">Warmer ↗</button><button class="text-action" data-style="precise" type="button">More Precise ↗</button><button class="text-action" data-style="humor" type="button">Add Humor ↗</button></div></div><div class="native-tweak-field"><input id="tweak-input" type="text" aria-label="Instructions for adjusting the reply" placeholder="How should it tweak?"><button id="tweak-submit" type="button" aria-label="Apply changes">⏎</button></div><p id="tweak-error" class="notice" role="status" hidden></p></section>
+          <section class="panel-view" id="view-blocked" hidden>
+            <p class="notice" data-tone="warning" role="status">This app does not support direct insertion. Copy your reply and paste it into the chat.</p>
+            <label class="field-label" for="copy-text">Reply to copy</label><textarea class="context-input" id="copy-text" rows="5" readonly></textarea>
+            <p class="context-meta" id="copy-status" role="status">If copying is unavailable, select the text and press Ctrl/Cmd+C.</p>
+            <button class="pill" id="blocked-context" type="button">Edit context</button>
+          </section>
+        </div>
+        <footer class="panel-footer"><button class="pill" id="secondary-action" type="button">Back</button><div class="reply-tools" id="reply-tools" hidden><span class="sr" id="context-summary">Reply context</span><button class="text-action" id="review-context" type="button">Context</button><button class="comparison-toggle text-action" id="compare" type="button" aria-controls="candidate-list" aria-expanded="false">Compare</button></div><button class="pill primary" id="primary-action" type="button">Confirm & generate</button></footer>
+      </div>
+      <footer class="message-composer"><span class="icon" aria-hidden="true">☻</span><span class="icon" aria-hidden="true">＋</span><div class="input-wrap"><textarea class="input" id="input" rows="1" placeholder="Type a message" aria-label="Type a message"></textarea></div>
+        <div class="launcher" id="launcher" data-tip="reply">
+          <button class="orb" id="orb" type="button" aria-label="Help me reply" aria-controls="overlay" aria-expanded="false"><span class="orb-tip reply-tip" aria-hidden="true">Help me reply</span><span class="orb-art" aria-hidden="true"></span></button>
+          <button class="idea" id="idea" type="button" aria-label="Say your idea" aria-controls="overlay" aria-expanded="false" tabindex="-1">
+            <span class="orb-tip idea-tip" aria-hidden="true">Say your idea</span>
+            <span class="idea-art" aria-hidden="true"><svg viewBox="0 0 26 26"><g fill="none" stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5 C4.1597 16.4759 2.5196 15.3336 1.8589 13.6158 C1.1983 11.898 1.6502 9.9511 3 8.7 C2.1883 6.5256 2.9797 4.0786 4.9108 2.7912 C6.8419 1.5037 9.4051 1.7145 11.1 3.3 C12.9067 1.1418 16.0021 .5923 18.4413 1.9967 C20.8805 3.4011 21.9593 6.354 21 9 C22.6763 10.1674 23.2695 12.3716 22.4057 14.2226 C21.5418 16.0737 19.4715 17.0348 17.5 16.5 Z"/><path d="M8 8.5V12.5 M12 6.5V13.5 M16 8.5V12.5"/><circle cx="6" cy="20" r="1"/></g><circle cx="2.8" cy="22.5" r=".55" fill="white"/></svg></span>
+          </button>
+        </div>
+        <button class="send" id="send" type="button" aria-label="Send message" disabled>➤</button>
+      </footer>
+    </article>
+  </section>
+  <div class="help"><span id="status" role="status"></span><div class="help-meta"><label class="scenario-control" for="scenario">Scenario <select id="scenario"><option value="normal">Normal</option><option value="exception">Limited access</option></select></label></div></div>
+</main>
+<script>
+if(!new URLSearchParams(location.search).has('scene')){
+  document.querySelector('.shell').remove();
+  const holder=document.createElement('main');holder.style.cssText='max-width:1100px;margin:24px auto;padding:0 12px;display:grid;gap:28px';
+  [['normal','Normal scenario'],['exception','Limited access scenario']].forEach(([scene,label])=>{
+    const section=document.createElement('section');const title=document.createElement('h2');title.textContent=label;title.style.cssText='font-size:16px;margin:0 0 8px;color:#34473c';
+    const frame=document.createElement('iframe');frame.src='index.html?scene='+scene;frame.title=label;frame.style.cssText='display:block;width:100%;height:790px;border:0;border-radius:12px';section.append(title,frame);holder.append(section);
+  });document.body.append(holder);
+}else{document.querySelector('.scenario-control').style.display='none';const script=document.createElement('script');script.src='tonebird.js';document.body.append(script)}
+</script>
+</body>
+</html>

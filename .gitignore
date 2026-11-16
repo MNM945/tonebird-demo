@@ -1,0 +1,15 @@
+# Local inspection and development material
+review-assets/
+tests/
+tonebird-original-parameters.md
+assets/tonebird-original/README.md
+
+# Unedited screen capture and upload package
+tonebird-demo-raw.mp4
+tonebird-github-upload.zip
+
+# Local settings and credentials
+.env
+.env.*
+.DS_Store
+Thumbs.db
