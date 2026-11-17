@@ -14,21 +14,20 @@ const scenes={
     {text:'Great! Would Thursday afternoon work for a quick call to go over the details?',time:'10:26'}
   ],composer:'',context:demoContext,intent:'',replyIntent:''},
   exception:{name:'Alex Morgan',avatar:'A',state:'online',preview:'Tomorrow at 2:30? 😊',messages:[
-    {text:'The updated proposal is ready! ✨ Budget: $8,900 :)',time:'14:08'},
+    {text:'I’ve attached Updated Proposal.pdf ✨ Please review the budget on page 2 before our call :)',time:'14:08'},
     {text:'Updated Proposal.pdf',document:true,time:'14:09'},
-    {mine:true,text:'Thanks! I’ll check the details and the attachment 👍',time:'14:10　✓✓'},
     {text:'Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕',time:'14:12'}
   ],composer:'',context:'',intent:'',replyIntent:''}
 };
-const cleanExceptionContext='Alex: The updated proposal is ready! ✨ Budget: $8,900 :)\nAlex: [Document: Updated Proposal.pdf]\nMe: Thanks! I’ll check the details and the attachment 👍\nAlex: Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕';
-const corruptedExceptionContext='Alex: The updated pr�posal is ready! âœ¨ Budget: $8,9□0 :)\nAlex: [Document: Updated Pr�posal.pdf — contents unavailable]\nMe: Thanks! I’ll check the details and the attachm�nt ðŸ‘�\nAlex: Can we go through it tomorrow at 2:3□? ðŸ˜Š Bring your questions — coffee is on me â˜• [text missing]';
+const cleanExceptionContext='Alex: I’ve attached Updated Proposal.pdf ✨ Please review the budget on page 2 before our call :)\nAlex: [Document: Updated Proposal.pdf]\nAlex: Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕';
+const corruptedExceptionContext='Alex: I’ve attached [text missing] âœ¨ Please review [text missing] before our call :)\nAlex: Can we go through it tomorrow at 2:3□? ðŸ˜Š Bring your questions — coffee is on me â˜• [text missing]';
 scenes.exception.context=corruptedExceptionContext;
 const sampleIdea='That works for me. Suggest 3 PM and keep it friendly.';
 const scenario='exception';
 const partialReplies = [
   'Thanks, Alex! Tomorrow works for me. Could you confirm the time?',
   'Happy to go over it tomorrow! What time works for you?',
-  'Tomorrow sounds good. Could you confirm the time and resend the proposal?'
+  'Tomorrow sounds good. When should we meet?'
 ];
 let view='context',current=0,candidates=[],confirmedContext=null,comparing=false;
 let previousReplies=null;
@@ -177,7 +176,12 @@ function buildCandidates(text,draft){
   }
   const days={monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday',saturday:'Saturday',sunday:'Sunday','周一':'Monday','周二':'Tuesday','周三':'Wednesday','周四':'Thursday','周五':'Friday','周六':'Saturday','周日':'Sunday','星期一':'Monday','星期二':'Tuesday','星期三':'Wednesday','星期四':'Thursday','星期五':'Friday','星期六':'Saturday','星期日':'Sunday'};
   if(scenario==='exception'){
-    if(hasSampleRequest(text))return ['2:30 works! I’ll bring questions 😊','See you at 2:30. Thanks for the coffee ☕','2:30 works. I’ll read the proposal first :)'];
+    const hasProposal = /Updated Proposal\.pdf/i.test(text);
+    if(hasSampleRequest(text)){
+      if(hasProposal)return ['2:30 works. I’ll review Updated Proposal.pdf first 😊','See you at 2:30. I’ll bring questions about Updated Proposal.pdf.','Thanks for Updated Proposal.pdf! I’ll read it before we meet.'];
+      return ['2:30 works! I’ll bring questions 😊','See you at 2:30. Thanks for the coffee ☕','2:30 works for me :)'];
+    }
+    if(hasProposal)return ['Thanks for Updated Proposal.pdf. I’ll review it.','I received Updated Proposal.pdf. I’ll follow up after reading it.','Thanks! Is there anything in Updated Proposal.pdf you’d like me to focus on?'];
     return ['Got it. I’ll take a look.','Thanks for the message! I’ll get back to you.','Thanks. Is there anything you’d like me to focus on?'];
   }
   const matches=[...text.matchAll(/Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|周[一二三四五六日]|星期[一二三四五六日]/gi)];
@@ -213,7 +217,11 @@ function renderCandidates(){
   if(confirmedContext&&scenario==='exception'&&!hasSampleRequest(confirmedContext.text)){
     note.textContent='General draft. Review and personalize before sending.';
   }
+  if(confirmedContext&&/Updated Proposal\.pdf/i.test(confirmedContext.text)&&(!confirmedContext.draft||confirmedContext.draft===sampleIdea)){
+    note.textContent='Uses the attachment recovered in the revised conversation.';
+  }
   if(!confirmedContext)note.textContent='Draft based on a partial read. Select Revise to check the time and attachment.';
+  note.classList.toggle('suggestion-warning', !confirmedContext);
   note.hidden = !note.textContent;
 
   const dots=el('dots');dots.replaceChildren();const count=document.createElement('span');count.className='sr';count.textContent=`Selected ${current+1} / ${candidates.length}`;dots.appendChild(count);

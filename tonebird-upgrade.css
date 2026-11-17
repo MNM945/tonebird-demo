@@ -140,6 +140,7 @@ button:focus-visible, textarea:focus-visible, select:focus-visible, summary:focu
   line-height: 1.4;
   white-space: normal;
 }
+.suggestion-note.suggestion-warning { color: #f4d79a; }
 .overlay[data-view="replies"] .arrow,
 .overlay[data-view="tweak"] .arrow { align-self: center; }
 .native-tweak-bar .text-action { min-height: 28px; color: #f1f3f2; }
