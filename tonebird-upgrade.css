@@ -71,7 +71,7 @@ button:focus-visible, textarea:focus-visible, select:focus-visible, summary:focu
 .arrow { display: grid; place-items: center; grid-row: 1; justify-self: center; width: 24px; min-height: 24px; height: 24px; margin-block: -3.25px; padding: 0; border-radius: 12px; background: transparent; }
 .arrow img { width: 5.625px; height: 10px; pointer-events: none; }
 #prev { grid-column: 1; } #next { grid-column: 3; }
-.suggestion { grid-column: 2; grid-row: 1; min-width: 0; min-height: 17.5px; padding: 0 10px; font-size: var(--native-body-size); line-height: var(--native-body-line); overflow-wrap: anywhere; white-space: pre-wrap; }
+.suggestion { display: block; grid-column: 2; grid-row: 1; min-width: 0; min-height: 17.5px; padding: 0 10px; font-size: var(--native-body-size); line-height: var(--native-body-line); overflow-wrap: anywhere; white-space: pre-wrap; }
 .dots { display: flex; grid-column: 2; grid-row: 2; align-items: center; justify-content: center; height: var(--native-dot-height); margin: 5px 0 0; gap: 5px; }
 .dots i { flex: 0 0 auto; width: var(--native-dot-width); height: var(--native-dot-height); border-radius: 1.875px; background: rgba(245,245,245,.301961); }
 .dots i.active { width: var(--native-dot-width); background: #f5f5f5; }
@@ -107,10 +107,7 @@ button:focus-visible, textarea:focus-visible, select:focus-visible, summary:focu
 .candidate { width: 100%; padding: 9px 10px; border: 1px solid #737f76; border-radius: 14px; background: #101612; color: #f1f5f2; text-align: left; line-height: 1.45; overflow-wrap: anywhere; }
 .candidate:hover { background: #202a23; }
 .candidate[aria-checked="true"] { border: 2px solid #a8e6bb; padding: 8px 9px; background: #202a23; }
-.candidate-heading { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; color: #c3d0c7; font-size: 12px; }
 .candidate-text { display: block; font-size: 14px; white-space: pre-wrap; }
-.selected-mark { color: #b9efc8; }
-.candidate[aria-checked="false"] .selected-mark { visibility: hidden; }
 .help { align-items: flex-start; font-size: 12px; color: #52665a; }
 .help-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; max-width: 55%; }
 .scenario-control { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: #52665a; font-size: 12px; }
@@ -128,3 +125,38 @@ button:focus-visible, textarea:focus-visible, select:focus-visible, summary:focu
 }
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media(forced-colors:active) { .candidate[aria-checked="true"] { border-color: Highlight; } .orb-art,.idea-art { forced-color-adjust: none; } }
+
+.document-message { min-width: min(210px, 83%); }
+.document-message > span { display: block; margin-top: 3px; color: #52655e; font-size: 11px; }
+
+.reset { font-size: 12px; background: transparent; color: #42564c; min-height: 36px; padding: 0 8px; }
+.reset:hover { text-decoration: underline; }
+
+/* Keep the reply and its explanation together above the action row. */
+.suggestion-note {
+  margin: 5px 0 0;
+  color: #c7cbca;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.overlay[data-view="replies"] .arrow,
+.overlay[data-view="tweak"] .arrow { align-self: center; }
+.native-tweak-bar .text-action { min-height: 28px; color: #f1f3f2; }
+.native-tweak-field { min-height: 34px; }
+.native-tweak-field input { font-size: 12px; }
+
+/* Visible keyboard focus on both the light chat and the dark dialog. */
+.shell :is(button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid #164b3a;
+  outline-offset: 2px;
+}
+.shell .overlay :is(button, input, textarea, summary):focus-visible {
+  outline-color: #fff;
+  outline-offset: -2px;
+}
+.search, .side-title, .chat-item small, .date, .bubble small,
+.bubble.mine small, .input::placeholder { color: #52615b; opacity: 1; }
+.reply-tools .text-action { color: #fff; }
+.reply-tools, .native-tweak-bar .tweak-options { flex-wrap: wrap; }
+.context-field-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

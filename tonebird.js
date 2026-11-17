@@ -14,16 +14,24 @@ const scenes={
     {text:'Great! Would Thursday afternoon work for a quick call to go over the details?',time:'10:26'}
   ],composer:'',context:demoContext,intent:'',replyIntent:''},
   exception:{name:'Alex Morgan',avatar:'A',state:'online',preview:'Tomorrow at 2:30? 😊',messages:[
-    {text:'The updated proposal is ready! ✨ Budget: $8,900 (•‿•)',time:'14:08'},
+    {text:'The updated proposal is ready! ✨ Budget: $8,900 :)',time:'14:08'},
+    {text:'Updated Proposal.pdf',document:true,time:'14:09'},
     {mine:true,text:'Thanks! I’ll check the details and the attachment 👍',time:'14:10　✓✓'},
     {text:'Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕',time:'14:12'}
   ],composer:'',context:'',intent:'',replyIntent:''}
 };
-const cleanExceptionContext='Alex: The updated proposal is ready! ✨ Budget: $8,900 (•‿•)\nMe: Thanks! I’ll check the details and the attachment 👍\nAlex: Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕';
-const corruptedExceptionContext='Alex: The updated pr�posal is ready! âœ¨ Budget: $8,9□0 (â€¢â€¿â€¢)\nMe: Thanks! I’ll check the details and the attachm�nt ðŸ‘�\nAlex: Can we go through it tomorrow at 2:3□? ðŸ˜Š Bring your questions — coffee is on me â˜• [text missing]';
+const cleanExceptionContext='Alex: The updated proposal is ready! ✨ Budget: $8,900 :)\nAlex: [Document: Updated Proposal.pdf]\nMe: Thanks! I’ll check the details and the attachment 👍\nAlex: Can we go through it tomorrow at 2:30? 😊 Bring your questions — coffee is on me ☕';
+const corruptedExceptionContext='Alex: The updated pr�posal is ready! âœ¨ Budget: $8,9□0 :)\nAlex: [Document: Updated Pr�posal.pdf — contents unavailable]\nMe: Thanks! I’ll check the details and the attachm�nt ðŸ‘�\nAlex: Can we go through it tomorrow at 2:3□? ðŸ˜Š Bring your questions — coffee is on me â˜• [text missing]';
 scenes.exception.context=corruptedExceptionContext;
 const sampleIdea='That works for me. Suggest 3 PM and keep it friendly.';
-let view='context',scenario=new URLSearchParams(location.search).get('scene')==='exception'?'exception':'normal',current=0,candidates=[],confirmedContext=null,comparing=false;
+const scenario='exception';
+const partialReplies = [
+  'Thanks, Alex! Tomorrow works for me. Could you confirm the time?',
+  'Happy to go over it tomorrow! What time works for you?',
+  'Tomorrow sounds good. Could you confirm the time and resend the proposal?'
+];
+let view='context',current=0,candidates=[],confirmedContext=null,comparing=false;
+let previousReplies=null;
 let pendingTimer=0,pendingId=0,closeTimer=0,demoTimers=[],demoRunning=false,copying=false,copyId=0;
 let suppressHover=false,touchReveal=false,restoringFocus=false,pointerNear=false,returnFocus=orb;
 let sessionSource=null,sourceKind='visible',contextError='',replyIntent='';
@@ -51,17 +59,19 @@ function scheduleCollapse(){
   closeTimer=setTimeout(()=>{closeTimer=0;if(!keyboardInLauncher()&&!isCapturing())collapseLauncher(!pointerNear)},180);
 }
 function updateFooter(){
-  const labels={loading:['Reading…','Review context'],context:['Confirm & generate','Back to replies'],replies:[scenario==='exception'?'copy ⏎':'insert ⏎','Tweak'],intent:['Finish & review','Review context'],tweak:[scenario==='exception'?'copy ⏎':'insert ⏎','‹ Back'],blocked:[copying?'Copying…':'Copy reply','‹ Back']};
+  const labels={loading:['Reading…','Review context'],context:['Confirm & generate','Back to replies'],replies:['insert ⏎','Tweak'],intent:['Finish & review','Review context'],tweak:['insert ⏎','‹ Back'],blocked:[copying?'Copying…':'Copy reply','‹ Back']};
   [primary.textContent,secondary.textContent]=labels[view];
   primary.disabled=view==='loading'||(view==='blocked'&&copying)||(view==='context'&&!contextInput.value.trim())||(view==='intent'&&!intentInput.value.trim());
-  secondary.hidden=view==='loading'||(view==='context'&&!confirmedContext);
+  secondary.hidden=view==='loading'||(view==='context'&&!previousReplies);
 }
 function setView(next,focusId=null){
   if(view==='blocked'&&next!=='blocked'){copyId++;copying=false}
   view=next;overlay.dataset.view=next;
+  el('context-error').hidden=next!=='context'||!contextError;
   document.querySelectorAll('.panel-view').forEach(section=>{section.hidden=section.id!==`view-${next}`&&!(next==='tweak'&&section.id==='view-replies')});
   el('reply-tools').hidden=next!=='replies';
-  const titles={loading:'Preparing replies',context:'Review context',replies:'Choose a reply',intent:'Say your idea',tweak:'Adjust tone',blocked:'Copy your reply'};
+  el('review-context').textContent=confirmedContext?'Context':'Revise';
+  const titles={loading:'Preparing replies',context:'Revise context',replies:'Choose a reply',intent:'Say your idea',tweak:'Adjust tone',blocked:'Copy your reply'};
   el('panel-title').textContent=titles[next];el('panel-body').scrollTop=0;
   overlay.setAttribute('aria-busy',String(next==='loading'));updateFooter();
   if(focusId)el(focusId).focus({preventScroll:true});
@@ -71,19 +81,24 @@ function openPanel(trigger){
   orb.setAttribute('aria-expanded','true');suppressHover=true;collapseLauncher();
 }
 function hide(restore=true){
+  previousReplies=null;
   stopDemo();cancelPending();copyId++;copying=false;overlay.classList.remove('open');overlay.inert=true;overlay.setAttribute('aria-hidden','true');overlay.setAttribute('aria-busy','false');
   orb.setAttribute('aria-expanded','false');idea.setAttribute('aria-expanded','false');launcher.classList.remove('capturing');suppressHover=true;collapseLauncher();
   if(restore){restoringFocus=true;(returnFocus===idea?orb:returnFocus).focus({preventScroll:true});restoringFocus=false}
 }
-function dismiss(){hide();announce('Closed. Your edits are available when you reopen.')}
-function saveSceneState(){const state=scenes[scenario];state.composer=input.value;state.intent=intentInput.value;state.context=contextInput.value;state.replyIntent=replyIntent}
+function dismiss(){hide();announce('')}
 function renderScene(){
   const scene=scenes[scenario];
   el('side-avatar').textContent=scene.avatar;el('chat-avatar').textContent=scene.avatar;
   el('side-name').textContent=scene.name;el('chat-name').textContent=scene.name;
   el('side-preview').textContent=scene.preview;el('chat-state').textContent=scene.state;
   const date=document.createElement('span');date.className='date';date.textContent='TODAY';messages.replaceChildren(date);
-  scene.messages.forEach(item=>{const bubble=document.createElement('div');bubble.className=item.mine?'bubble mine':'bubble';bubble.appendChild(document.createTextNode(item.text));const time=document.createElement('small');time.textContent=item.time;bubble.appendChild(time);messages.appendChild(bubble)});
+  scene.messages.forEach(item=>{const bubble=document.createElement('div');bubble.className=item.mine?'bubble mine':'bubble';if(item.document){
+    bubble.classList.add('document-message');
+    const filename=document.createElement('strong');filename.textContent='📄 '+item.text;
+    const type=document.createElement('span');type.textContent='PDF document';
+    bubble.append(filename,type);
+  }else bubble.appendChild(document.createTextNode(item.text));const time=document.createElement('small');time.textContent=item.time;bubble.appendChild(time);messages.appendChild(bubble)});
   messages.scrollTop=messages.scrollHeight;input.value=scene.composer;send.disabled=!scene.composer.trim();intentInput.value=scene.intent;contextInput.value=scene.context;replyIntent=scene.replyIntent;sessionSource=sourceSnapshot();sourceKind='visible';
 }
 function visibleLines(){
@@ -92,17 +107,29 @@ function visibleLines(){
 }
 function sourceSnapshot(){return scenario==='exception'?corruptedExceptionContext:visibleLines().join('\n')}
 function invalidateContext(){confirmedContext=null;candidates=[];contextError='';updateFooter();updateContextNotice()}
+function hasUnreadableText(text){
+  return /[�□]|\[text missing\]/i.test(text);
+}
 function updateContextNotice(){
-  const notice=el('context-notice');notice.dataset.tone=contextError||scenario!=='normal'?'warning':'info';
-  notice.textContent=contextError||(scenario==='exception'?'Some characters could not be read correctly. Check the garbled text against the conversation, or paste the correct messages before generating a reply.':'Review or correct the conversation used for this reply.');
+  const error=el('context-error');
+  error.textContent=contextError;
+  error.hidden=view!=='context'||!contextError;
+  const notice=el('context-notice');
+  notice.hidden=!hasUnreadableText(contextInput.value);
+  notice.dataset.tone='warning';
+  notice.textContent='Some characters could not be read correctly. Check the text against the conversation before generating a reply.';
   el('use-visible').textContent=scenario==='exception'?'Use sample context':'Use visible conversation';
   const count=contextInput.value.trim().length;
   const lines=contextInput.value.trim().split('\n').filter(Boolean);
+  el('context-preview-label').hidden=!lines.length;
   el('context-preview').textContent=lines.length?lines.at(-1):'No conversation captured. Paste the relevant messages.';
   el('context-meta').textContent=`${sourceKind==='manual'?'Manually provided / edited':sourceKind==='sample'?'Selected sample':'Visible conversation'} · ${count} characters. Remove unrelated content or correct errors.`;
-  contextInput.setAttribute('aria-invalid',String(Boolean(contextError&&!contextInput.value.trim())));
+  contextInput.setAttribute('aria-invalid',String(Boolean(contextError)));
 }
 function showContext(focus=false){
+  if(view==='replies'||view==='tweak'){
+    previousReplies={candidates:[...candidates],current,confirmedContext,comparing};
+  }
   cancelPending();launcher.classList.remove('capturing');idea.setAttribute('aria-expanded','false');collapseLauncher();
   el('context-details').open=focus||scenario!=='normal'||Boolean(contextError);
   updateContextNotice();setView('context',focus?'context-input':null);
@@ -118,8 +145,13 @@ function startReply(trigger=orb){
       if(!preserveManual){contextInput.value=snapshot;sourceKind='visible'}
       invalidateContext();if(preserveManual)contextError='The conversation has changed. Your edits were kept; check for new messages.';
     }
-    showContext();
-    if(scenario==='normal'&&!contextError){confirmContext(false)}else announce('Access is limited. Review the conversation before continuing.');
+    confirmedContext=null;
+    candidates=[...partialReplies];
+    current=0;
+    comparing=false;
+    renderCandidates();
+    announce('Draft replies are ready. Select Revise to check the partial conversation.');
+    setView('replies','review-context');
   });
 }
 function showIdea(trigger=idea){
@@ -134,13 +166,20 @@ function finishIdea(){
   const snapshot=sourceSnapshot();if(snapshot!==sessionSource){sessionSource=snapshot;contextInput.value=snapshot;sourceKind='visible'}
   replyIntent=intentInput.value.trim();scenes[scenario].replyIntent=replyIntent;invalidateContext();showContext(true);
 }
+function hasSampleRequest(text){
+  const normalize=value=>value.replace(/\s+/g,' ').trim();
+  return text.split('\n').some(line=>normalize(line)===normalize(cleanExceptionContext.split('\n').at(-1)));
+}
 function buildCandidates(text,draft){
   if(draft&&draft!==sampleIdea){
     const chinese=/[\u3400-\u9fff]/.test(draft);
     return [draft,chinese?`Thanks! ${draft}`:`Thanks! ${draft}`,chinese?`${draft}\nLet me know if that works for you.`:`${draft}\nLet me know if that works for you.`];
   }
   const days={monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday',saturday:'Saturday',sunday:'Sunday','周一':'Monday','周二':'Tuesday','周三':'Wednesday','周四':'Thursday','周五':'Friday','周六':'Saturday','周日':'Sunday','星期一':'Monday','星期二':'Tuesday','星期三':'Wednesday','星期四':'Thursday','星期五':'Friday','星期六':'Saturday','星期日':'Sunday'};
-  if(scenario==='exception'&&text.replace(/\s/g,'')===cleanExceptionContext.replace(/\s/g,''))return ['Tomorrow at 2:30 works for me! I’ll bring my questions 😊','Sounds great — see you tomorrow at 2:30! Thanks for the coffee ☕','2:30 tomorrow is perfect. I’ll review the proposal beforehand (•‿•)'];
+  if(scenario==='exception'){
+    if(hasSampleRequest(text))return ['2:30 works! I’ll bring questions 😊','See you at 2:30. Thanks for the coffee ☕','2:30 works. I’ll read the proposal first :)'];
+    return ['Got it. I’ll take a look.','Thanks for the message! I’ll get back to you.','Thanks. Is there anything you’d like me to focus on?'];
+  }
   const matches=[...text.matchAll(/Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|周[一二三四五六日]|星期[一二三四五六日]/gi)];
   if(!matches.length)return null;
   const normalize=source=>source.replace(/Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday/gi,'{day}').replace(/\r/g,'').trim();
@@ -153,17 +192,30 @@ function confirmContext(reviewed=true){
   if(view!=='context')return false;
   const text=contextInput.value.trim(),draft=replyIntent.trim();
   if(!text){contextError='Please provide the relevant conversation first.';updateContextNotice();el('context-details').open=true;contextInput.focus();return false}
-  if(scenario==='exception'&&/[�□]|内容截断|终��/.test(text)){contextError='Some content is missing. Correct the context or use the sample before generating.';updateContextNotice();el('context-details').open=true;contextInput.focus();return false}
+  if(hasUnreadableText(text)){contextError='Some content is missing. Correct the context or use the sample before generating.';updateContextNotice();el('context-details').open=true;contextInput.focus();return false}
   const generated=buildCandidates(text,draft);
-  if(!generated){contextError=scenario==='exception'?'Correct the unreadable text or use the sample before generating.':'This demo supports the sample conversation. Use it to continue.';updateContextNotice();el('context-details').open=true;contextInput.focus();return false}
+  if(!generated){contextError=scenario==='exception'?'This demo generates replies from the complete sample conversation. Select Use sample context, then Confirm & generate.':'This demo supports the sample conversation. Use it to continue.';updateContextNotice();el('context-details').open=true;contextInput.focus();return false}
+  contextError='';updateContextNotice();
+  previousReplies=null;
   confirmedContext={text,draft,source:sourceKind,scenario,reviewed};candidates=generated;current=0;comparing=false;renderCandidates();
   setView('loading','close');el('loading-label').textContent='Preparing replies from the confirmed context…';
-  afterRead(()=>{setView('replies');announce('Three replies are ready. Compare them or edit the context.')},800);
+  afterRead(()=>{setView('replies','review-context');announce('Three replies are ready. Compare them or edit the context.')},800);
   return true;
 }
 function renderCandidates(){
   if(!candidates.length)return;
   el('suggestion').textContent=candidates[current];
+  const notes = scenario === 'exception'
+    ? ['Confirms the time and offers to bring questions.', 'Confirms the time and responds to the coffee offer.', 'Confirms the time and says you will review the proposal first.']
+    : ['Accepts the day and proposes a time.', 'Thanks Sarah and suggests a time in a friendly tone.', 'States your availability and asks Sarah to confirm.'];
+  const note = el('suggestion-note');
+  note.textContent = confirmedContext?.draft && confirmedContext.draft !== sampleIdea ? '' : notes[current];
+  if(confirmedContext&&scenario==='exception'&&!hasSampleRequest(confirmedContext.text)){
+    note.textContent='General draft. Review and personalize before sending.';
+  }
+  if(!confirmedContext)note.textContent='Draft based on a partial read. Select Revise to check the time and attachment.';
+  note.hidden = !note.textContent;
+
   const dots=el('dots');dots.replaceChildren();const count=document.createElement('span');count.className='sr';count.textContent=`Selected ${current+1} / ${candidates.length}`;dots.appendChild(count);
   candidates.forEach((_,index)=>{const dot=document.createElement('i');dot.className=index===current?'active':'';dot.setAttribute('aria-hidden','true');dots.appendChild(dot)});
   el('context-summary').textContent=`${confirmedContext?.reviewed?'Confirmed':'Captured'} · ${confirmedContext?.source==='visible'?'Visible content':'Provided content'} · For this reply`;
@@ -171,17 +223,14 @@ function renderCandidates(){
   candidates.forEach((text,index)=>{
     const button=document.createElement('button');button.type='button';button.className='candidate';button.dataset.index=index;
     button.setAttribute('role','radio');button.setAttribute('aria-checked',String(index===current));button.tabIndex=index===current?0:-1;
-    const heading=document.createElement('span');heading.className='candidate-heading';heading.textContent=`Reply ${index+1}`;
-    const mark=document.createElement('span');mark.className='selected-mark';mark.textContent=index===current?'✓ Selected':'Select reply';
     const body=document.createElement('span');body.className='candidate-text';body.textContent=text;
-    heading.appendChild(mark);button.append(heading,body);list.appendChild(button);
+    button.append(body);list.appendChild(button);
   });
-  list.hidden=!comparing;el('single-reply').hidden=comparing;el('compare').setAttribute('aria-expanded',String(comparing));el('compare').textContent=comparing?'Collapse comparison':'Compare';
+  list.hidden=!comparing;el('single-reply').hidden=comparing;el('compare').setAttribute('aria-expanded',String(comparing));el('compare').textContent=comparing?'Collapse':'Compare';
 }
 function choose(index,focus=false){if(!candidates.length)return;current=(index+candidates.length)%candidates.length;renderCandidates();if(focus){const button=el('candidate-list').children[current];button.focus({preventScroll:true});button.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'})}}
 function insertReply(){
-  if(!confirmedContext||!candidates.length)return;
-  if(scenario==='exception'){el('copy-text').value=candidates[current];el('copy-status').textContent='Copy the reply, then paste it into the chat.';setView('blocked','primary-action');return}
+  if(!candidates.length)return;
   const prior=input.value.trim();input.value=prior?`${input.value}\n${candidates[current]}`:candidates[current];scenes[scenario].composer=input.value;send.disabled=false;
   hide(false);input.focus();announce(prior?'Added to your draft. Review it before sending.':'Inserted into the composer. Review it before sending.');
 }
@@ -194,14 +243,39 @@ async function copyReply(){
     if(id===copyId){el('copy-text').focus();el('copy-text').select();el('copy-status').textContent='Automatic copying is unavailable. Press Ctrl/Cmd+C to copy the selected text.'}
   }finally{if(id===copyId){copying=false;updateFooter()}}
 }
-el('scenario').addEventListener('change',()=>{
-  saveSceneState();stopDemo();cancelPending();scenario=el('scenario').value;renderScene();invalidateContext();
-  if(isOpen())showContext();announce(scenario==='exception'?'Limited access conversation selected.':'Normal conversation selected. Each scenario keeps its own messages and draft.');
-});
 contextInput.addEventListener('input',()=>{sourceKind='manual';scenes[scenario].context=contextInput.value;invalidateContext()});
+el('clear-context').addEventListener('click',()=>{
+  contextInput.value='';
+  contextInput.dispatchEvent(new Event('input',{bubbles:true}));
+  contextInput.focus();
+});
 intentInput.addEventListener('input',()=>{scenes[scenario].intent=intentInput.value;updateFooter()});
 el('use-visible').addEventListener('click',()=>{contextInput.value=scenario==='exception'?cleanExceptionContext:sourceSnapshot();scenes[scenario].context=contextInput.value;sourceKind=scenario==='exception'?'sample':'visible';invalidateContext();contextInput.focus()});
-el('use-manual').addEventListener('click',()=>{sourceKind='manual';updateContextNotice();contextInput.focus();contextInput.select()});
+el('use-manual').addEventListener('click',async event=>{
+  const button=event.currentTarget;
+  const previous=contextInput.value;
+  const session=pendingId;
+  button.disabled=true;
+  let pasted='';
+  try {
+    pasted=(await navigator.clipboard?.readText() ?? '').trim();
+  } catch {
+    // The browser may require manual paste.
+  } finally {
+    button.disabled=false;
+  }
+  if(!isOpen()||view!=='context'||pendingId!==session||contextInput.value!==previous)return;
+  contextInput.focus();
+  if(pasted){
+    contextInput.value=pasted;
+    contextInput.dispatchEvent(new Event('input',{bubbles:true}));
+    announce('Conversation pasted. Review it before generating.');
+    return;
+  }
+  contextInput.select();
+  contextError='Press Ctrl+V or Cmd+V to paste over the selected text.';
+  updateContextNotice();
+});
 el('review-context').addEventListener('click',()=>showContext(true));
 el('blocked-context').addEventListener('click',()=>showContext(true));
 el('compare').addEventListener('click',()=>{comparing=!comparing;renderCandidates()});
@@ -213,10 +287,10 @@ el('candidate-list').addEventListener('keydown',event=>{
 });
 el('prev').addEventListener('click',()=>choose(current-1));el('next').addEventListener('click',()=>choose(current+1));
 function applyTweak(style){
-  if(!confirmedContext||!candidates.length)return;
-  const base=buildCandidates(confirmedContext.text,confirmedContext.draft);if(!base)return;
+  if(!candidates.length)return;
+  const base=confirmedContext?buildCandidates(confirmedContext.text,confirmedContext.draft):partialReplies;if(!base)return;
   candidates[current]=style==='warm'?base[1]:style==='precise'?base[0]:base[0]+(/[\u3400-\u9fff]/.test(base[0])?' My calendar is finally being cooperative.':' My calendar is finally being cooperative.');
-  el('tweak-error').hidden=true;renderCandidates();announce('Wording updated. Your reply remains above.');
+  el('tweak-error').hidden=true;renderCandidates();if(confirmedContext)el('suggestion-note').hidden=true;announce('Wording updated. Your reply remains above.');
 }
 function submitTweak(){
   const request=el('tweak-input').value.trim();if(!request)return;
@@ -232,8 +306,16 @@ primary.addEventListener('click',()=>{
   if(view==='context')confirmContext();else if(view==='intent')finishIdea();else if(view==='replies'||view==='tweak')insertReply();else if(view==='blocked')copyReply();
 });
 secondary.addEventListener('click',()=>{
+  if(view==='context'&&previousReplies){
+    stopDemo();
+    ({candidates,current,confirmedContext,comparing}=previousReplies);
+    previousReplies=null;
+    renderCandidates();
+    setView('replies','review-context');
+    return;
+  }
   stopDemo();if(view==='intent'){replyIntent=intentInput.value.trim();scenes[scenario].replyIntent=replyIntent;const snapshot=sourceSnapshot();if(snapshot!==sessionSource){sessionSource=snapshot;contextInput.value=snapshot;sourceKind='visible'}invalidateContext();showContext(true)}
-  else if(view==='replies'){comparing=false;renderCandidates();setView('tweak','tweak-input')}else if(confirmedContext)setView('replies');
+  else if(view==='replies'){comparing=false;renderCandidates();setView('tweak','tweak-back')}else if(confirmedContext)setView('replies');
 });
 el('close').addEventListener('click',dismiss);
 orb.addEventListener('pointerdown',event=>{touchReveal=event.pointerType!=='mouse'&&!expanded()});
@@ -265,9 +347,10 @@ send.addEventListener('click',()=>{
 play.addEventListener('click',()=>{
   hide(false);startReply(play);demoRunning=true;play.disabled=true;play.textContent='Playing…';
   const step=(fn,delay)=>demoTimers.push(setTimeout(()=>{if(demoRunning)fn()},delay));
-  step(()=>{if(view!=='context')return;if(scenario==='exception'||!contextInput.value.trim()){contextInput.value=scenario==='exception'?cleanExceptionContext:demoContext;scenes[scenario].context=contextInput.value;sourceKind='sample'}invalidateContext();if(!confirmContext()){stopDemo();announce('Demo paused. Please review the conversation.')}},1800);
-  step(()=>{comparing=true;renderCandidates()},3100);step(()=>choose(1),4300);step(insertReply,5700);
-  step(()=>{stopDemo();announce('Demo complete. Review the context or compare replies.')},6200);
+  step(()=>{if(view==='replies'&&!confirmedContext)showContext();},2400);
+  step(()=>{if(view!=='context')return;if(scenario==='exception'||!contextInput.value.trim()){contextInput.value=scenario==='exception'?cleanExceptionContext:demoContext;scenes[scenario].context=contextInput.value;sourceKind='sample'}invalidateContext();if(!confirmContext()){stopDemo();announce('Demo paused. Please review the conversation.')}},4200);
+  step(()=>{comparing=true;renderCandidates()},5500);step(()=>choose(1),6500);step(insertReply,7900);
+  step(()=>{stopDemo();announce('Demo complete. Review the context or compare replies.')},8400);
 });
 document.addEventListener('pointerdown',event=>{
   if(demoRunning&&!play.contains(event.target)){stopDemo();announce('Demo paused. You are in control.')}
@@ -285,4 +368,5 @@ window.addEventListener('resize',()=>{resetOrb();if(expanded())placeTip()});redu
 renderScene();
 updateFooter();
 
-el('scenario').value=scenario;
+
+el('reset').addEventListener('click',()=>location.reload());

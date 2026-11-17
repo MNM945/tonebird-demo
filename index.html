@@ -37,27 +37,31 @@
 </head>
 <body>
 <main class="shell">
-  <header class="top"><div class="top-actions"><span class="label">WhatsApp demo</span><button class="play" id="play" type="button">▶ Play demo</button></div></header>
+  <header class="top"><div class="top-actions"><button class="reset" id="reset" type="button">Reset</button><button class="play" id="play" type="button">▶ Play demo</button></div></header>
   <section class="app" aria-label="ToneBird in WhatsApp">
-    <aside class="sidebar"><div class="side-top"><span>WhatsApp</span><span class="side-icons">⌕ ···</span></div><div class="search">⌕　Search or start new chat</div><div class="side-title">CHATS</div><div class="chat-item"><span class="avatar" id="side-avatar">S</span><span><b id="side-name">Sarah Chen</b><small id="side-preview">Would Thursday afternoon work?</small></span></div></aside>
-    <article class="chat"><header class="head"><span class="avatar" id="chat-avatar">S</span><span><b id="chat-name">Sarah Chen</b><small id="chat-state">online</small></span><span class="head-icons" aria-hidden="true">⌕ ⋮</span></header>
-      <div class="messages" id="messages" aria-live="polite"><span class="date">TODAY</span><div class="bubble">Hi! Have you had a chance to look at the proposal?<small>10:18</small></div><div class="bubble mine">Yes, the direction looks good. I’m checking the timeline with my team now.<small>10:24　✓✓</small></div><div class="bubble">Great! Would Thursday afternoon work for a quick call to go over the details?<small>10:26</small></div></div>
+    <aside class="sidebar"><div class="side-top"><span>WhatsApp</span><span class="side-icons">⌕ ···</span></div><div class="search">⌕　Search or start new chat</div><div class="side-title">CHATS</div><div class="chat-item"><span class="avatar" id="side-avatar">S</span><span><b id="side-name">Alex Morgan</b><small id="side-preview">Tomorrow at 2:30? 😊</small></span></div></aside>
+    <article class="chat"><header class="head"><span class="avatar" id="chat-avatar">S</span><span><b id="chat-name">Alex Morgan</b><small id="chat-state">online</small></span><span class="head-icons" aria-hidden="true">⌕ ⋮</span></header>
+      <div class="messages" id="messages" aria-live="polite"></div>
       <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="panel-title" aria-hidden="true" inert>
         <header class="panel-header"><h2 id="panel-title">Review context</h2><button class="close" id="close" type="button" aria-label="Close reply assistant">✕</button></header>
         <div class="panel-body" id="panel-body">
           <section class="panel-view" id="view-loading" hidden><p class="loading-label" id="loading-label" role="status">Reading conversation…</p><div aria-hidden="true"><i class="skeleton"></i><i class="skeleton"></i><i class="skeleton"></i></div></section>
           <section class="panel-view" id="view-context" hidden>
             <p class="notice" id="context-notice" role="status"></p>
-            <p class="context-preview" id="context-preview"></p>
+            <p class="context-meta" id="context-preview-label">Last message in the captured conversation. Edit the full conversation below.</p>
+            <p class="context-preview" id="context-preview" aria-describedby="context-preview-label"></p>
             <details class="context-details" id="context-details"><summary>Review / edit conversation</summary>
             <div class="source-choice"><button class="pill" id="use-visible" type="button">Use visible conversation</button><button class="pill" id="use-manual" type="button">Paste conversation</button></div>
-            <label class="field-label" for="context-input">Conversation context</label>
-            <textarea class="context-input" id="context-input" rows="4" aria-describedby="context-meta" placeholder="Paste the relevant messages and include speaker names."></textarea>
+            <div class="context-field-header">
+              <label class="field-label" for="context-input">Conversation context</label>
+              <button class="text-action" id="clear-context" type="button">Clear</button>
+            </div>
+            <textarea class="context-input" id="context-input" rows="4" aria-describedby="context-meta context-error" placeholder="Paste the relevant messages and include speaker names."></textarea>
             <p class="context-meta" id="context-meta">Remove unrelated messages or correct the captured text.</p>
             </details>
           </section>
           <section class="panel-view" id="view-replies" hidden>
-            <div class="reply-line" id="single-reply"><button class="arrow" id="prev" type="button" aria-label="Previous reply"><img src="assets/tonebird-original/chevron-left.svg" alt=""></button><span class="suggestion" id="suggestion"></span><button class="arrow" id="next" type="button" aria-label="Next reply"><img src="assets/tonebird-original/chevron-right.svg" alt=""></button><p class="dots" id="dots" role="status"></p></div>
+            <div class="reply-line" id="single-reply"><button class="arrow" id="prev" type="button" aria-label="Previous reply"><img src="assets/tonebird-original/chevron-left.svg" alt=""></button><div class="suggestion"><div id="suggestion"></div><p class="suggestion-note" id="suggestion-note"></p></div><button class="arrow" id="next" type="button" aria-label="Next reply"><img src="assets/tonebird-original/chevron-right.svg" alt=""></button><p class="dots" id="dots" role="status"></p></div>
             <div class="candidate-list" id="candidate-list" role="radiogroup" aria-label="Compare and select a reply" hidden></div>
           </section>
           <section class="panel-view" id="view-intent" hidden>
@@ -74,6 +78,7 @@
             <button class="pill" id="blocked-context" type="button">Edit context</button>
           </section>
         </div>
+        <p class="notice context-error" id="context-error" role="alert" data-tone="warning" hidden></p>
         <footer class="panel-footer"><button class="pill" id="secondary-action" type="button">Back</button><div class="reply-tools" id="reply-tools" hidden><span class="sr" id="context-summary">Reply context</span><button class="text-action" id="review-context" type="button">Context</button><button class="comparison-toggle text-action" id="compare" type="button" aria-controls="candidate-list" aria-expanded="false">Compare</button></div><button class="pill primary" id="primary-action" type="button">Confirm & generate</button></footer>
       </div>
       <footer class="message-composer"><span class="icon" aria-hidden="true">☻</span><span class="icon" aria-hidden="true">＋</span><div class="input-wrap"><textarea class="input" id="input" rows="1" placeholder="Type a message" aria-label="Type a message"></textarea></div>
@@ -88,17 +93,8 @@
       </footer>
     </article>
   </section>
-  <div class="help"><span id="status" role="status"></span><div class="help-meta"><label class="scenario-control" for="scenario">Scenario <select id="scenario"><option value="normal">Normal</option><option value="exception">Limited access</option></select></label></div></div>
+  <span class="sr" id="status" role="status"></span>
 </main>
-<script>
-if(!new URLSearchParams(location.search).has('scene')){
-  document.querySelector('.shell').remove();
-  const holder=document.createElement('main');holder.style.cssText='max-width:1100px;margin:24px auto;padding:0 12px;display:grid;gap:28px';
-  [['normal','Normal scenario'],['exception','Limited access scenario']].forEach(([scene,label])=>{
-    const section=document.createElement('section');const title=document.createElement('h2');title.textContent=label;title.style.cssText='font-size:16px;margin:0 0 8px;color:#34473c';
-    const frame=document.createElement('iframe');frame.src='index.html?scene='+scene;frame.title=label;frame.style.cssText='display:block;width:100%;height:790px;border:0;border-radius:12px';section.append(title,frame);holder.append(section);
-  });document.body.append(holder);
-}else{document.querySelector('.scenario-control').style.display='none';const script=document.createElement('script');script.src='tonebird.js';document.body.append(script)}
-</script>
+<script src="tonebird.js"></script>
 </body>
 </html>
